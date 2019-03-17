@@ -12,13 +12,13 @@ Instructions:
    {"id": *str_id*, "text": *space separated sequence*}. Output is 
    also a jsonl file, each line contains 
 2, Tokens that are split into subword by WordPiece, their embeddings are 
-   the averaged embedding of its subword embeddings, as in the [2, 3]. This
+   the averaged embedding of its subword embeddings, as in [2, 3]. This
    makes the output embedding respect the original tokenization scheme.
 3, Each of the subtitle, question, and answers are encoded separately, 
    not in the form of sequence pairs. This means they are all `sequence A`, 
    `A embedding` is added to each of the token embeddings before forward 
    into the model. See [0] for details.
- 
+
 
 [0] BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
 [1] https://github.com/huggingface/pytorch-pretrained-BERT

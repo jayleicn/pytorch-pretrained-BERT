@@ -223,10 +223,14 @@ def get_original_token_embedding(padded_wp_token_embedding, wp_token_mask, token
 
 
 def load_tvqa_data():
-    base_path = "/net/bvisionserver4/playpen1/jielei/data/preprocessed_video_data/text_data/bbox_refined_ts_data"
-    train_path = os.path.join(base_path, "tvqa_bbt_train_bbox_refined_ts_processed_noun_att_labels.json")
-    valid_path = os.path.join(base_path, "tvqa_bbt_valid_bbox_refined_ts_processed_noun_att_labels.json")
-    test_path = os.path.join(base_path, "tvqa_bbt_test_bbox_refined_ts_processed_noun_att_labels.json")
+    # base_path = "/net/bvisionserver4/playpen1/jielei/data/preprocessed_video_data/text_data/bbox_refined_ts_data"
+    # train_path = os.path.join(base_path, "tvqa_bbt_train_bbox_refined_ts_processed_noun_att_labels.json")
+    # valid_path = os.path.join(base_path, "tvqa_bbt_valid_bbox_refined_ts_processed_noun_att_labels.json")
+    # test_path = os.path.join(base_path, "tvqa_bbt_test_bbox_refined_ts_processed_noun_att_labels.json")
+    base_path = "/net/bvisionserver4/playpen1/jielei/data/preprocessed_video_data/text_data/"
+    train_path = os.path.join(base_path, "train_tvshow_v6_srt_ts_fps3_bert_pre_input.json")
+    valid_path = os.path.join(base_path, "valid_tvshow_v6_srt_ts_fps3_bert_pre_input.json")
+    test_path = os.path.join(base_path, "test_tvshow_v6_srt_ts_fps3_bert_pre_input.json")
     train_data = load_json(train_path)
     valid_data = load_json(valid_path)
     test_data = load_json(test_path)
@@ -282,6 +286,7 @@ def main():
     parser.add_argument("--no_cuda",
                         action='store_true',
                         help="Whether not to use CUDA when available")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
 
@@ -299,7 +304,7 @@ def main():
     layer_index = -2  # second-to-last, which showed reasonable performance in BERT paper
 
     dset = BertSingleSeqDataset(input_data, args.bert_model, args.max_seq_length)
-    model = BertModel.from_pretrained(args.bert_model)  # models/bert-base-uncased-tvqa-bbt-sub.bin
+    model = BertModel.from_pretrained(args.bert_model)
     model.to(device)
 
     if n_gpu > 1:
@@ -311,8 +316,10 @@ def main():
 
     model.eval()
     torch.set_grad_enabled(False)
+    cnt = 0
     with h5py.File(args.output_file, "w") as h5_f:
         for batch in tqdm(eval_dataloader):
+            cnt += 1
             input_ids = batch.token_ids.to(device)
             input_mask = batch.token_ids_mask.to(device)
             unique_ids = batch.unique_id
@@ -327,6 +334,8 @@ def main():
                                                                          batch.token_ids_mask[batch_idx],
                                                                          batch.token_map[batch_idx])
                 h5_f.create_dataset(str(unique_id), data=original_token_embeddings, dtype=np.float32)
+            if args.debug and cnt == 5:
+                break
 
 
 if __name__ == "__main__":

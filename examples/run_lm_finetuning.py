@@ -412,7 +412,7 @@ def convert_example_to_features(example, max_seq_length, tokenizer):
 def main():
     parser = argparse.ArgumentParser()
 
-    ## Required parameters
+    # Required parameters
     parser.add_argument("--train_file",
                         default=None,
                         type=str,
@@ -421,13 +421,12 @@ def main():
     parser.add_argument("--bert_model", default=None, type=str, required=True,
                         help="Bert pre-trained model selected in the list: bert-base-uncased, "
                              "bert-large-uncased, bert-base-cased, bert-base-multilingual, bert-base-chinese.")
-    parser.add_argument("--output_file",
+    parser.add_argument("--output_dir",
                         default=None,
                         type=str,
                         required=True,
                         help="The output directory where the model checkpoints will be written.")
-
-    ## Other parameters
+    # Other parameters
     parser.add_argument("--max_seq_length",
                         default=128,
                         type=int,
@@ -483,12 +482,16 @@ def main():
                         action='store_true',
                         help="Whether to use 16-bit float precision instead of 32-bit")
     parser.add_argument('--loss_scale',
-                        type = float, default = 0,
-                        help = "Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
+                        type=float, default=0,
+                        help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                         "0 (default value): dynamic loss scaling.\n"
                         "Positive power of 2: static loss scaling value.\n")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
@@ -588,7 +591,7 @@ def main():
         if args.local_rank == -1:
             train_sampler = RandomSampler(train_dataset)
         else:
-            #TODO: check if this works with current data generator from disk that relies on file.__next__
+            # TODO: check if this works with current data generator from disk that relies on file.__next__
             # (it doesn't return item back by index)
             train_sampler = DistributedSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
@@ -602,7 +605,7 @@ def main():
                 input_ids, input_mask, segment_ids, lm_label_ids, is_next = batch
                 loss = model(input_ids, segment_ids, input_mask, lm_label_ids, is_next)
                 if n_gpu > 1:
-                    loss = loss.mean() # mean() to average on multi-gpu.
+                    loss = loss.mean()  # mean() to average on multi-gpu.
                 if args.gradient_accumulation_steps > 1:
                     loss = loss / args.gradient_accumulation_steps
                 if args.fp16:
@@ -622,12 +625,18 @@ def main():
                     optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
+                    if args.debug:
+                        break
+            if args.debug:
+                break
 
         # Save a trained model
         logger.info("** ** * Saving fine - tuned model ** ** * ")
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-        # output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
-        output_model_file = args.output_file
+        if args.debug:
+            output_model_file = os.path.join(args.output_dir, "pytorch_model_debug.bin")
+        else:
+            output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
         if args.do_train:
             torch.save(model_to_save.state_dict(), output_model_file)
 

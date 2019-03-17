@@ -14,8 +14,10 @@ def flat_list_of_lists(l):
 
 
 def load_tvqa_train_data():
-    base_path = "/net/bvisionserver4/playpen1/jielei/data/preprocessed_video_data/text_data/bbox_refined_ts_data"
-    train_path = os.path.join(base_path, "tvqa_bbt_train_bbox_refined_ts_processed_noun_att_labels.json")
+    # base_path = "/net/bvisionserver4/playpen1/jielei/data/preprocessed_video_data/text_data/bbox_refined_ts_data"
+    # train_path = os.path.join(base_path, "tvqa_bbt_train_bbox_refined_ts_processed_noun_att_labels.json")
+    base_path = "/net/bvisionserver4/playpen1/jielei/data/preprocessed_video_data/text_data/"
+    train_path = os.path.join(base_path, "train_tvshow_v6_srt_ts_fps3_bert_pre_input.json")
     return load_json(train_path)
 
 
@@ -45,8 +47,8 @@ def mk_bert_lm_input(outfile_path, sub_only=True):
 
 
 if __name__ == '__main__':
-    filepath = "./samples/tvqa_bbt_sub.txt"
+    filepath = "./samples/tvqa_all_sub.txt"
     mk_bert_lm_input(filepath, sub_only=True)
 
-    filepath = "./samples/tvqa_bbt_sub_qa.txt"
+    filepath = "./samples/tvqa_all_sub_qa.txt"
     mk_bert_lm_input(filepath, sub_only=False)
