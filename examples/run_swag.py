@@ -312,7 +312,7 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
-
+    parser.add_argument('--debug', action="store_true", help="debug mode")
     args = parser.parse_args()
 
     if args.local_rank == -1 or args.no_cuda:
@@ -434,6 +434,8 @@ def main():
                 batch = tuple(t.to(device) for t in batch)
                 input_ids, input_mask, segment_ids, label_ids = batch
                 loss = model(input_ids, segment_ids, input_mask, label_ids)
+                if args.debug:
+                    break
                 if n_gpu > 1:
                     loss = loss.mean() # mean() to average on multi-gpu.
                 if args.fp16 and args.loss_scale != 1.0:
@@ -460,7 +462,11 @@ def main():
                     optimizer.step()  # accumulate gradient
                     optimizer.zero_grad()
                     global_step += 1
-
+            if args.debug:
+                break
+    if args.debug:
+        import sys
+        sys.exit(1)
     # Save a trained model
     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
